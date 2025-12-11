@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi des Lauréats INPT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 2.5rem;
+            padding-bottom: 2rem;
+            border-left: 2px solid #e2e8f0;
+        }
+        .timeline-item:last-child {
+            border-left: 2px solid transparent;
+            padding-bottom: 0;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -0.5rem;
+            top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 9999px;
+            background-color: white;
+            border: 2px solid #3579C1;
+        }
+        
+        .animated-banner {
+            background: linear-gradient(-45deg, #3579C1, #2a68a8, #363495, #2a68a8);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .banner-content {
+            animation: fadeInSlide 1s ease-out forwards;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        #add-modal-content, #edit-modal-content {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        #add-modal.flex #add-modal-content, #edit-modal.flex #edit-modal-content {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .header-logo {
+            width: 2.5rem;
+            height: 2.5rem;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+        
+        .oracle-banner {
+            background-image: url('oracle.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        .oracle-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: inherit;
+        }
+
+        .oracle-banner-content {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center justify-center">
+                    <img src="icon.png" alt="INPT Logo" class="header-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="h-10 w-10 bg-[#3579C1] rounded-lg flex items-center justify-center" style="display: none;">
+                        <i class="fas fa-graduation-cap text-white text-xl"></i>
+                    </div>
+                </div>
+                <h1 class="text-xl md:text-2xl font-bold text-[#3579C1]">Suivi des Lauréats INPT</h1>
+            </div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" id="nav-dashboard" class="text-slate-600 hover:text-[#3579C1] font-semibold">Tableau de bord</a>
+                
+                <div class="relative dropdown">
+                    <button class="text-slate-600 hover:text-[#3579C1] font-semibold flex items-center">
+                        Filières <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                    </button>
+                    <div id="filiere-menu" class="dropdown-menu absolute hidden bg-white shadow-lg rounded-lg mt-2 py-2 w-64">
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-filiere="ASEDS">ASEDS</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-filiere="SUD">Cloud & IoT (SUD)</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-filiere="SICT">Smart ICT</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-filiere="CSCN">Cyber Sécurité</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-filiere="ISDN">Sciences de Données</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-filiere="SESN">Systèmes Embarqués</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-filiere="IAMOA">Innovation & AMOA</a>
+                    </div>
+                </div>
+
+                <div class="relative dropdown">
+                    <button class="text-slate-600 hover:text-[#3579C1] font-semibold flex items-center">
+                        Top Entreprises <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                    </button>
+                    <div id="entreprise-menu" class="dropdown-menu absolute hidden bg-white shadow-lg rounded-lg mt-2 py-2 w-48">
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-entreprise="oracle">Oracle</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-entreprise="capgemini">Capgemini</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-entreprise="ocp">OCP Group</a>
+                        <a href="#" class="block px-4 py-2 text-slate-700 hover:bg-blue-50" data-entreprise="cgi">CGI</a>
+                    </div>
+                </div>
+
+                <a href="#" class="text-slate-600 hover:text-[#3579C1]">Statistiques</a>
+                <a href="#" id="nav-import" class="text-slate-600 hover:text-[#3579C1]">Importer</a>
+                <a href="#" id="nav-add" class="bg-[#3579C1] hover:bg-[#2a68a8] text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-plus-circle mr-2"></i>Ajouter
+                </a>
+            </div>
+            <button class="md:hidden text-slate-700">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-6 md:p-8 flex-grow">
+
+        <div id="dashboard-page">
+            <h2 class="text-3xl font-bold mb-6">Tableau de bord</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="card p-6 flex items-center">
+                    <i class="fas fa-user-graduate text-4xl text-[#3579C1] mr-6"></i>
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Nombre de lauréats</p>
+                        <p id="laureats-count" class="text-3xl font-bold">0</p>
+                    </div>
+                </div>
+                <div class="card p-6 flex items-center">
+                    <i class="fas fa-trophy text-4xl text-amber-500 mr-6"></i>
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Top Entreprises</p>
+                        <p class="text-xl font-bold">Oracle, Capgemini, OCP</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 md:p-8">
+                <h3 class="text-2xl font-bold mb-6">Rechercher un lauréat</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <input type="text" id="search-name" placeholder="Nom, prénom..." class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3579C1]">
+                    <select type="text" id="search-year" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3579C1]">
+                        <option value="">Année de diplôme</option>
+                        <option value="2023-2024">2023-2024</option>
+                        <option value="2022-2023">2022-2023</option>
+                        <option value="2021-2022">2021-2022</option>
+                        <option value="2020-2021">2020-2021</option>
+                        <option value="2019-2020">2019-2020</option>
+                    </select>
+                    <select type="text" id="search-filiere" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3579C1]">
+                        <option value="">Filière</option>
+                        <option value="ASEDS">ASEDS</option>
+                        <option value="SUD">Cloud & IoT (SUD)</option>
+                        <option value="SICT">Smart ICT</option>
+                        <option value="CSCN">Cyber Sécurité</option>
+                        <option value="ISDN">Sciences de Données</option>
+                        <option value="SESN">Systèmes Embarqués</option>
+                        <option value="IAMOA">Innovation & AMOA</option>
+                    </select>
+                    <button id="search-button" class="w-full bg-[#3579C1] hover:bg-[#2a68a8] text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-search mr-2"></i>Rechercher
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th class="p-4 font-semibold">Nom</th>
+                                <th class="p-4 font-semibold">Filière</th>
+                                <th class="p-4 font-semibold">Dernier Poste</th>
+                                <th class="p-4 font-semibold">Entreprise</th>
+                                <th class="p-4 font-semibold">Promotion</th>
+                                <th class="p-4 font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laureats-table-body">
+                           <tr id="empty-laureats-row">
+                                <td colspan="6" class="text-center p-8 text-slate-500">
+                                    Aucun lauréat à afficher. Veuillez importer un fichier CSV.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="profile-page" class="hidden">
+            <a href="#" class="back-to-dashboard-link inline-flex items-center text-slate-600 hover:text-[#3579C1] mb-6">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour à la liste
+            </a>
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="relative">
+                    <div class="h-40 bg-[#3579C1]"></div>
+                    <div class="absolute top-20 left-8">
+                        <div class="w-32 h-32 rounded-full bg-slate-200 border-4 border-white flex items-center justify-center">
+                            <i class="fas fa-user text-6xl text-slate-400"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-20 pb-8 px-8">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 id="profile-name" class="text-3xl font-bold text-slate-900"></h2>
+                            <p id="profile-current-job" class="text-lg text-slate-600">Dernier poste non renseigné</p>
+                            <p id="profile-current-location" class="text-sm text-slate-500 mt-1">Localisation non renseignée</p>
+                        </div>
+                        <div>
+                            <button id="edit-profile-button" class="bg-[#3579C1] hover:bg-[#2a68a8] text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-edit mr-2"></i>Modifier le profil
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-6 border-t border-slate-200 pt-6">
+                        <h3 class="text-xl font-bold mb-4">Informations</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                            <div><p class="text-sm text-slate-500">Filière</p><p id="profile-filiere" class="font-semibold"></p></div>
+                            <div><p class="text-sm text-slate-500">Promotion</p><p id="profile-promotion" class="font-semibold"></p></div>
+                            <div><p class="text-sm text-slate-500">Email</p><p id="profile-email" class="font-semibold text-[#3579C1]">Non renseigné</p></div>
+                            <div><p class="text-sm text-slate-500">Téléphone</p><p id="profile-phone" class="font-semibold">Non renseigné</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="parcours-container" class="px-8 py-6 bg-slate-50 border-t border-slate-200">
+                    <h3 class="text-2xl font-bold mb-6">Parcours Professionnel</h3>
+                    <div id="profile-timeline" class="timeline">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="import-page" class="hidden">
+            <h2 class="text-3xl font-bold mb-6">Importer les données des lauréats</h2>
+            <div class="card p-6 md:p-8 max-w-2xl mx-auto">
+                <p class="text-slate-600 mb-4">
+                    Sélectionnez un fichier CSV pour importer en masse les informations des lauréats dans la base de données. Le fichier doit contenir les colonnes : N°;nom;prenom;filiere;annee.
+                </p>
+                <div class="mb-6">
+                    <label for="csv-file" class="block text-sm font-medium text-slate-700 mb-2">Fichier CSV</label>
+                    <input type="file" id="csv-file" name="csv-file" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                </div>
+                <button id="import-button" class="w-full bg-[#3579C1] hover:bg-[#2a68a8] text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+                    <i class="fas fa-upload mr-2"></i>
+                    Importer et Sauvegarder
+                </button>
+                <div id="import-message" class="mt-4 text-center"></div>
+            </div>
+        </div>
+
+        <div id="filiere-page" class="hidden">
+            <a href="#" class="back-to-dashboard-link inline-flex items-center text-slate-600 hover:text-[#3579C1] mb-6">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour au tableau de bord
+            </a>
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="animated-banner h-48 flex items-center justify-center p-8 rounded-t-lg">
+                    <div id="banner-content-wrapper" class="text-center banner-content">
+                        <i id="filiere-icon" class="fas text-5xl mb-4"></i>
+                        <h2 id="filiere-title" class="text-4xl font-bold"></h2>
+                    </div>
+                </div>
+                <div class="p-8">
+                    <p id="filiere-description" class="text-slate-600 mb-8 text-lg text-center"></p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="card p-6">
+                            <h4 class="font-bold text-lg mb-2">Top Entreprises</h4>
+                            <ul id="filiere-top-entreprises" class="list-disc list-inside text-slate-700"></ul>
+                        </div>
+                        <div class="card p-6">
+                             <h4 class="font-bold text-lg mb-2">Fidélité au Domaine</h4>
+                             <p id="filiere-retention-rate" class="text-3xl font-bold text-[#3579C1]"></p>
+                             <p class="text-sm text-slate-500">des lauréats travaillent dans ce secteur.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-2xl font-bold mb-6">Lauréats de cette filière</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="p-4 font-semibold">Nom</th>
+                                    <th class="p-4 font-semibold">Promotion</th>
+                                    <th class="p-4 font-semibold">Dernier Poste</th>
+                                    <th class="p-4 font-semibold">Entreprise</th>
+                                    <th class="p-4 font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filiere-laureats-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="entreprise-page" class="hidden">
+            <a href="#" class="back-to-dashboard-link inline-flex items-center text-slate-600 hover:text-[#3579C1] mb-6">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour au tableau de bord
+            </a>
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div id="entreprise-banner" class="h-48 bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center rounded-t-lg">
+                    <div class="oracle-banner-content text-center">
+                        <h2 id="entreprise-title" class="text-4xl font-bold text-white"></h2>
+                    </div>
+                </div>
+                <div class="p-8">
+                    <p id="entreprise-description" class="text-slate-600 mb-8 text-lg"></p>
+                    
+                    <h3 class="text-2xl font-bold mb-6">Lauréats de l'INPT chez cette entreprise</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="p-4 font-semibold">Nom</th>
+                                    <th class="p-4 font-semibold">Filière</th>
+                                    <th class="p-4 font-semibold">Promotion</th>
+                                    <th class="p-4 font-semibold">Poste Actuel</th>
+                                    <th class="p-4 font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="entreprise-laureats-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    
+    <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div id="add-modal-content" class="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl transform transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Ajouter un Parcours Professionnel</h2>
+                <button id="close-add-modal-button" class="text-slate-500 hover:text-slate-800 text-3xl leading-none">&times;</button>
+            </div>
+            <form id="add-parcours-form" class="space-y-4">
+                <div>
+                    <label for="laureat-select" class="block text-sm font-medium text-slate-700">Lauréat</label>
+                    <select id="laureat-select" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-[#3579C1] focus:border-[#3579C1] sm:text-sm"></select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="entreprise-input" class="block text-sm font-medium text-slate-700">Entreprise</label>
+                        <input type="text" id="entreprise-input" required placeholder="ex: Capgemini" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-[#3579C1] focus:border-[#3579C1] sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="poste-input" class="block text-sm font-medium text-slate-700">Titre du Poste</label>
+                        <input type="text" id="poste-input" required placeholder="ex: Développeur Full-Stack" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-[#3579C1] focus:border-[#3579C1] sm:text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <label for="date-debut-input" class="block text-sm font-medium text-slate-700">Date de début</label>
+                        <input type="date" id="date-debut-input" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-[#3579C1] focus:border-[#3579C1] sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="date-fin-input" class="block text-sm font-medium text-slate-700">Date de fin (laisser vide si actuel)</label>
+                        <input type="date" id="date-fin-input" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-[#3579C1] focus:border-[#3579C1] sm:text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label for="localisation-input" class="block text-sm font-medium text-slate-700">Localisation</label>
+                    <input type="text" id="localisation-input" placeholder="ex: Rabat, Maroc" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-[#3579C1] focus:border-[#3579C1] sm:text-sm">
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-[#3579C1] hover:bg-[#2a68a8] text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+                        <i class="fas fa-save mr-2"></i>
+                        Enregistrer le parcours
+                    </button>
+                </div>
+                <div id="add-form-message" class="mt-4 text-center"></div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div id="edit-modal-content" class="bg-white rounded-lg shadow-xl p-8 w-full max-w-4xl transform transition-all max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Modifier le profil de <span id="edit-laureat-name"></span></h2>
+                <button id="close-edit-modal-button" class="text-slate-500 hover:text-slate-800 text-3xl leading-none">&times;</button>
+            </div>
+            
+            <form id="edit-laureat-form" class="space-y-4 mb-8 border-b pb-8">
+                <h3 class="text-xl font-semibold">Informations Personnelles</h3>
+                <input type="hidden" id="edit-laureat-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-nom-input" class="block text-sm font-medium text-slate-700">Nom</label>
+                        <input type="text" id="edit-nom-input" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="edit-prenom-input" class="block text-sm font-medium text-slate-700">Prénom</label>
+                        <input type="text" id="edit-prenom-input" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="edit-email-input" class="block text-sm font-medium text-slate-700">Email</label>
+                        <input type="email" id="edit-email-input" class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="edit-telephone-input" class="block text-sm font-medium text-slate-700">Téléphone</label>
+                        <input type="tel" id="edit-telephone-input" class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                </div>
+                 <div class="pt-4">
+                    <button type="submit" class="w-full bg-[#3579C1] hover:bg-[#2a68a8] text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+                        <i class="fas fa-save mr-2"></i>
+                        Mettre à jour les informations
+                    </button>
+                </div>
+            </form>
+            
+            <h3 class="text-xl font-semibold mb-4">Parcours Professionnel</h3>
+            <div id="parcours-list" class="space-y-4 mb-4">
+                </div>
+            
+            <h3 class="text-xl font-semibold my-4">Ajouter une nouvelle expérience</h3>
+            <form id="add-parcours-edit-form" class="space-y-4">
+                <input type="hidden" id="edit-laureat-id-parcours">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-entreprise-input" class="block text-sm font-medium text-slate-700">Entreprise</label>
+                        <input type="text" id="edit-entreprise-input" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="edit-poste-input" class="block text-sm font-medium text-slate-700">Titre du Poste</label>
+                        <input type="text" id="edit-poste-input" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="edit-date-debut-input" class="block text-sm font-medium text-slate-700">Date de début</label>
+                        <input type="date" id="edit-date-debut-input" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="edit-date-fin-input" class="block text-sm font-medium text-slate-700">Date de fin</label>
+                        <input type="date" id="edit-date-fin-input" class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="edit-localisation-input" class="block text-sm font-medium text-slate-700">Localisation</label>
+                        <input type="text" id="edit-localisation-input" class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md">
+                    </div>
+                </div>
+                 <div class="pt-4">
+                    <button type="submit" class="w-full bg-[#3579C1] hover:bg-[#2a68a8] text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Ajouter cette expérience
+                    </button>
+                </div>
+            </form>
+
+            <div id="edit-form-message" class="mt-4 text-center"></div>
+        </div>
+    </div>
+    
+    <footer class="bg-slate-800 text-white mt-auto">
+        <div class="container mx-auto px-6 py-4 text-center">
+            <p>&copy; 2025 INPT - Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // DOM ELEMENTS
+            const pages = {
+                dashboard: document.getElementById('dashboard-page'),
+                profile: document.getElementById('profile-page'),
+                import: document.getElementById('import-page'),
+                filiere: document.getElementById('filiere-page'),
+                entreprise: document.getElementById('entreprise-page')
+            };
+            const addModal = document.getElementById('add-modal');
+            const editModal = document.getElementById('edit-modal');
+            const editProfileButton = document.getElementById('edit-profile-button');
+            const closeEditModalButton = document.getElementById('close-edit-modal-button');
+            const addParcoursEditForm = document.getElementById('add-parcours-edit-form');
+            
+            let laureatsData = [];
+            let currentLaureat = null; // NEW: Variable to store the currently viewed laureate object
+
+            const filieresDetails = {
+                'ASEDS': { title: 'Advanced Software Engineering for Digital Services', keywords: ['SOFTWARE'], description: 'Cette filière forme des ingénieurs spécialisés dans la conception et le développement de services numériques innovants.', icon: 'fa-code', topCompanies: ['Capgemini', 'CGI', 'Atos'], retentionRate: '85%' },
+                'SUD': { title: 'Cloud & IoT', keywords: ['UBIQUITAIRES', 'CLOUD', 'IOT'], description: 'Filière axée sur les systèmes connectés, le Cloud Computing et l\'Internet des Objets (IoT).', icon: 'fa-cloud', topCompanies: ['Amazon Web Services', 'Microsoft', 'Orange'], retentionRate: '90%' },
+                'SICT': { title: 'Smart ICT', keywords: ['SMART ICT'], description: 'Cette filière se concentre sur les technologies de l\'information et de la communication intelligentes.', icon: 'fa-city', topCompanies: ['Alstom', 'Thales', 'Engie'], retentionRate: '82%' },
+                'CSCN': { title: 'Cyber Sécurité', keywords: ['CYBER'], description: 'Forme des experts en sécurité des systèmes d\'information pour protéger les données et les infrastructures.', icon: 'fa-shield-halved', topCompanies: ['ANSSI', 'Thales', 'Airbus CyberSecurity'], retentionRate: '95%' },
+                'ISDN': { title: 'Sciences de Données', keywords: ['SCIENCES DE DONN'], description: 'Cette filière est dédiée à la formation d\'ingénieurs capables de collecter, analyser et valoriser de grands volumes de données.', icon: 'fa-brain', topCompanies: ['OCP Group', 'Attijariwafa Bank', 'Royal Air Maroc'], retentionRate: '88%' },
+                'SESN': { title: 'Systèmes Embarqués', keywords: ['EMBARQU'], description: 'Spécialisation dans la conception de systèmes électroniques autonomes et de services numériques associés.', icon: 'fa-microchip', topCompanies: ['Stellantis', 'Safran', 'Thales'], retentionRate: '86%' },
+                'IAMOA': { title: 'Innovation & AMOA', keywords: ['AMOA'], description: 'Forme des ingénieurs à double compétence pour piloter des projets innovants en faisant le lien entre technique et métier.', icon: 'fa-lightbulb', topCompanies: ['Société Générale', 'BNP Paribas', 'Capgemini Invent'], retentionRate: '78%' }
+            };
+            
+            const entreprisesDetails = {
+                'oracle': { title: 'Oracle', description: 'Oracle est une entreprise américaine spécialisée dans les logiciels et services à destination des entreprises. Elle est particulièrement connue pour ses systèmes de gestion de base de données.' },
+                'capgemini': { title: 'Capgemini', description: 'Capgemini est un leader mondial du conseil, des services informatiques et de la transformation numérique.' },
+                'ocp': { title: 'OCP Group', description: 'OCP Group est un acteur mondial de référence sur le marché des phosphates et de leurs dérivés.' },
+                'cgi': { title: 'CGI', description: 'CGI est une société de conseil en technologies de l\'information et services aux entreprises.' }
+            };
+
+            //PAGE NAVIGATION & DISPLAY LOGIC
+            function showPage(pageName) {
+                Object.values(pages).forEach(p => p.classList.add('hidden'));
+                if (pages[pageName]) {
+                    pages[pageName].classList.remove('hidden');
+                }
+                window.scrollTo(0, 0);
+            }
+            
+            function updateProfileTimeline(laureatData) {
+                const timelineContainer = document.getElementById('profile-timeline');
+                timelineContainer.innerHTML = ''; 
+
+                let timelineHTML = `
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h4 class="font-bold text-lg">Formation INPT</h4>
+                            <p class="text-slate-600">École Nationale des Postes et Télécommunications</p>
+                            <p class="text-sm text-slate-500 mt-2">Diplômé en ${laureatData.annee}</p>
+                        </div>
+                    </div>
+                `;
+
+                if (laureatData.parcours && laureatData.parcours.length > 0) {
+                    const sortedParcours = [...laureatData.parcours].sort((a, b) => new Date(b.dateDebut) - new Date(a.dateDebut));
+                    sortedParcours.forEach(p => {
+                         const dateFinDisplay = (p.dateFin === 'Présent' || !p.dateFin) ? 'Présent' : p.dateFin;
+                        timelineHTML += `
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <h4 class="font-bold text-lg">${p.poste}</h4>
+                                    <p class="text-slate-600">${p.entreprise}</p>
+                                    <p class="text-sm text-slate-500 mt-2">
+                                        <i class="fas fa-calendar-alt mr-1"></i> ${p.dateDebut} - ${dateFinDisplay}
+                                        ${p.localisation ? `<span class="mx-2">|</span><i class="fas fa-map-marker-alt mr-1"></i> ${p.localisation}` : ''}
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    timelineHTML += `
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg">Parcours professionnel à compléter</h4>
+                                <p class="text-slate-600">Aucune information professionnelle disponible actuellement.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                timelineContainer.innerHTML = timelineHTML;
+            }
+
+            function showProfile(laureatData) {
+                currentLaureat = laureatData; // MODIFIED: Store the full object of the current laureate
+
+                document.getElementById('profile-name').textContent = `${laureatData.prenom} ${laureatData.nom}`;
+                document.getElementById('profile-filiere').textContent = laureatData.filiere;
+                document.getElementById('profile-promotion').textContent = laureatData.annee;
+                document.getElementById('profile-email').textContent = laureatData.email || 'Non renseigné';
+                document.getElementById('profile-phone').textContent = laureatData.telephone || 'Non renseigné';
+
+                const latestJob = (laureatData.parcours && laureatData.parcours.length > 0) ? laureatData.parcours.sort((a, b) => new Date(b.dateDebut) - new Date(a.dateDebut))[0] : null;
+                
+                if (latestJob) {
+                    document.getElementById('profile-current-job').textContent = `${latestJob.poste} chez ${latestJob.entreprise}`;
+                    document.getElementById('profile-current-location').textContent = latestJob.localisation || 'Localisation non renseignée';
+                } else {
+                    document.getElementById('profile-current-job').textContent = 'Dernier poste non renseigné';
+                    document.getElementById('profile-current-location').textContent = 'Localisation non renseignée';
+                }
+
+                updateProfileTimeline(laureatData);
+                showPage('profile');
+            }
+            
+
+            function showFilierePage(filiereId) {
+                const filiereData = filieresDetails[filiereId];
+                if (!filiereData) return;
+                
+                const bannerContent = document.getElementById('banner-content-wrapper');
+                bannerContent.classList.remove('banner-content');
+                void bannerContent.offsetWidth;
+                bannerContent.classList.add('banner-content');
+
+                document.getElementById('filiere-icon').className = `fas ${filiereData.icon} text-5xl mb-4`;
+                document.getElementById('filiere-title').textContent = filiereData.title;
+                document.getElementById('filiere-description').textContent = filiereData.description;
+                document.getElementById('filiere-retention-rate').textContent = filiereData.retentionRate;
+                
+                const topEntreprisesList = document.getElementById('filiere-top-entreprises');
+                topEntreprisesList.innerHTML = '';
+                filiereData.topCompanies.forEach(company => {
+                    topEntreprisesList.innerHTML += `<li>${company}</li>`;
+                });
+
+                const filteredLaureats = laureatsData.filter(l => {
+                    const filiereUpper = l.filiere.toUpperCase();
+                    return filiereData.keywords.some(kw => filiereUpper.includes(kw));
+                });
+
+                const tableBody = document.getElementById('filiere-laureats-table-body');
+                tableBody.innerHTML = '';
+
+                if (filteredLaureats.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-slate-500">Aucun lauréat trouvé pour cette filière.</td></tr>`;
+                } else {
+                    filteredLaureats.forEach((laureat) => {
+                        const latestJob = (laureat.parcours && laureat.parcours.length > 0) ? laureat.parcours.sort((a, b) => new Date(b.dateDebut) - new Date(a.dateDebut))[0] : null;
+                        const newRow = `
+                            <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                <td class="p-4">${laureat.prenom} ${laureat.nom}</td>
+                                <td class="p-4">${laureat.annee}</td>
+                                <td class="p-4">${latestJob ? latestJob.poste : 'N/A'}</td>
+                                <td class="p-4">${latestJob ? latestJob.entreprise : 'N/A'}</td>
+                                <td class="p-4"><a href="#" class="text-blue-600 hover:underline view-profile-link" data-id="${laureat.id}">Voir profil</a></td>
+                            </tr>
+                        `;
+                        tableBody.insertAdjacentHTML('beforeend', newRow);
+                    });
+                }
+                showPage('filiere');
+            }
+            
+            function showEntreprisePage(entrepriseId) {
+                const entrepriseData = entreprisesDetails[entrepriseId];
+                if (!entrepriseData) return;
+
+                const entrepriseBanner = document.getElementById('entreprise-banner');
+                entrepriseBanner.className = entrepriseId === 'oracle' ? 'oracle-banner h-48 flex items-center justify-center rounded-t-lg' : 'h-48 bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center rounded-t-lg';
+                document.getElementById('entreprise-title').textContent = entrepriseData.title;
+                document.getElementById('entreprise-description').textContent = entrepriseData.description;
+
+                const tableBody = document.getElementById('entreprise-laureats-table-body');
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-slate-500">Aucun lauréat trouvé pour cette entreprise (données non disponibles).</td></tr>`;
+                
+                showPage('entreprise');
+            }
+            
+            function updateDashboardTable(dataToDisplay) {
+                const laureatsTableBody = document.getElementById('laureats-table-body');
+                laureatsTableBody.innerHTML = '';
+
+                if (!dataToDisplay || dataToDisplay.length === 0) {
+                     laureatsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-500">Aucun résultat trouvé.</td></tr>`;
+                     return;
+                }
+
+                dataToDisplay.forEach((laureat) => {
+                     const latestJob = (laureat.parcours && laureat.parcours.length > 0) ? laureat.parcours.sort((a, b) => new Date(b.dateDebut) - new Date(a.dateDebut))[0] : null;
+                     const newRow = `
+                        <tr class="border-b border-slate-200 hover:bg-slate-50">
+                            <td class="p-4">${laureat.prenom} ${laureat.nom}</td>
+                            <td class="p-4">${laureat.filiere}</td>
+                            <td class="p-4">${latestJob ? latestJob.poste : 'N/A'}</td>
+                            <td class="p-4">${latestJob ? latestJob.entreprise : 'N/A'}</td>
+                            <td class="p-4">${laureat.annee}</td>
+                            <td class="p-4"><a href="#" class="text-blue-600 hover:underline view-profile-link" data-id="${laureat.id}">Voir profil</a></td>
+                        </tr>
+                    `;
+                    laureatsTableBody.insertAdjacentHTML('beforeend', newRow);
+                });
+            }
+            
+            // DATA LOADING & SAVING (PHP BRIDGE)
+            async function fetchData() {
+                try {
+                    const response = await fetch('get_data.php'); 
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        laureatsData = result.data.map(l => ({
+                            ...l,
+                            id: parseInt(l.id, 10) 
+                        }));
+                    } else {
+                        console.error('API Error (fetchData):', result.message);
+                    }
+                } catch (error) {
+                    console.error('Fetch Error (get_data.php):', error);
+                }
+                
+                document.getElementById('laureats-count').textContent = laureatsData.length;
+                updateDashboardTable(laureatsData);
+                return laureatsData;
+            }
+
+            async function saveData(data) {
+                 try {
+                    const response = await fetch('save_data.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                    return { status: 'error', message: 'Impossible de contacter le serveur de sauvegarde.' };
+                }
+            }
+            
+            // EVENT LISTENERS
+            document.querySelectorAll('.back-to-dashboard-link').forEach(link => {
+                link.addEventListener('click', e => { e.preventDefault(); showPage('dashboard'); });
+            });
+            document.getElementById('nav-dashboard').addEventListener('click', e => { e.preventDefault(); showPage('dashboard'); });
+            document.getElementById('nav-import').addEventListener('click', e => { e.preventDefault(); showPage('import'); });
+
+            document.querySelectorAll('#filiere-menu a').forEach(link => {
+                link.addEventListener('click', function(event) { event.preventDefault(); showFilierePage(this.getAttribute('data-filiere')); });
+            });
+            
+            document.querySelectorAll('#entreprise-menu a').forEach(link => {
+                link.addEventListener('click', function(event) { event.preventDefault(); showEntreprisePage(this.getAttribute('data-entreprise')); });
+            });
+            
+            document.body.addEventListener('click', function(event) {
+                if (event.target.classList.contains('view-profile-link')) {
+                    event.preventDefault();
+                    const laureatId = parseInt(event.target.getAttribute('data-id'), 10);
+                    const laureat = laureatsData.find(l => l.id === laureatId);
+                    if (laureat) showProfile(laureat);
+                }
+            });
+
+            //SEARCH LOGIC (remains the same)
+             document.getElementById('search-button').addEventListener('click', () => {
+                const nameQuery = document.getElementById('search-name').value.toLowerCase();
+                const yearQuery = document.getElementById('search-year').value;
+                const filiereIdQuery = document.getElementById('search-filiere').value;
+                let filteredData = laureatsData;
+                if (nameQuery) filteredData = filteredData.filter(l => `${l.prenom} ${l.nom}`.toLowerCase().includes(nameQuery));
+                if (yearQuery) filteredData = filteredData.filter(l => l.annee && l.annee.trim() === yearQuery);
+                if (filiereIdQuery) {
+                    const filiereData = filieresDetails[filiereIdQuery];
+                    if (filiereData) filteredData = filteredData.filter(l => l.filiere && filiereData.keywords.some(kw => l.filiere.toUpperCase().includes(kw)));
+                }
+                updateDashboardTable(filteredData);
+            });
+
+            //DROPDOWN MENU LOGIC (remains the same)
+            document.querySelectorAll('.dropdown > button').forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    const menu = this.nextElementSibling;
+                    const isHidden = menu.classList.contains('hidden');
+                    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+                    if (isHidden) menu.classList.remove('hidden');
+                });
+            });
+            window.addEventListener('click', () => document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden')));
+
+            //CSV IMPORT LOGIC (remains the same)
+            const importButton = document.getElementById('import-button');
+            const csvFileInput = document.getElementById('csv-file');
+            const importMessage = document.getElementById('import-message');
+            
+            importButton.addEventListener('click', function() {
+                if (csvFileInput.files.length === 0) {
+                    importMessage.innerHTML = `<p class="text-red-600">Veuillez sélectionner un fichier.</p>`;
+                    return;
+                }
+                const file = csvFileInput.files[0];
+                const reader = new FileReader();
+
+                importMessage.innerHTML = `<p class="text-blue-600"><i class="fas fa-spinner fa-spin mr-2"></i>Lecture du fichier en cours...</p>`;
+
+                reader.onload = async function(event) {
+                    const text = event.target.result;
+                    const rows = text.split('\n').slice(1);
+                    const importedLaureats = [];
+                    let maxId = laureatsData.length > 0 ? Math.max(...laureatsData.map(l => l.id)) : 0;
+                    
+                    rows.forEach((row) => {
+                        if (row.trim() === '') return;
+                        const columns = row.split(';');
+                        if (columns.length >= 5) {
+                            const tempId = parseInt(columns[0]);
+                            const newId = isNaN(tempId) ? ++maxId : tempId;
+
+                            const laureat = { 
+                                id: newId, 
+                                nom: columns[1], 
+                                prenom: columns[2], 
+                                filiere: columns[3], 
+                                annee: columns[4].trim(),
+                                parcours: []
+                            };
+                            importedLaureats.push(laureat);
+                        }
+                    });
+
+                    if (importedLaureats.length === 0) {
+                         importMessage.innerHTML = `<p class="text-red-600 font-semibold"><i class="fas fa-exclamation-triangle mr-2"></i>Le fichier CSV ne contient aucune donnée valide.</p>`;
+                         return;
+                    }
+
+                    importMessage.innerHTML = `<p class="text-blue-600 font-semibold"><i class="fas fa-file-import mr-2"></i>${importedLaureats.length} lauréats importés. Sauvegarde en base de données...</p>`;
+                    
+                    const saveResult = await saveData(importedLaureats); 
+                    
+                    if (saveResult && saveResult.status === 'success') {
+                        await fetchData();
+                        importMessage.innerHTML = `<p class="text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>Succès ! Les données ont été importées et sauvegardées.</p>`;
+                    } else {
+                        importMessage.innerHTML = `<p class="text-red-600 font-semibold"><i class="fas fa-exclamation-triangle mr-2"></i>Erreur lors de la sauvegarde : ${saveResult.message || 'Problème de connexion serveur.'}</p>`;
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            //PARCOURS MODAL LOGIC 
+            const navAddLink = document.getElementById('nav-add');
+            const closeAddModalButton = document.getElementById('close-add-modal-button');
+            const addParcoursForm = document.getElementById('add-parcours-form');
+            
+            function showAddModal() {
+                const laureatSelect = document.getElementById('laureat-select');
+                let optionsHTML = '<option disabled selected value="">-- Sélectionner un lauréat --</option>';
+                const sortedLaureats = [...laureatsData].sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+                
+                sortedLaureats.forEach((laureat) => {
+                    const displayName = `${laureat.prenom || ''} ${laureat.nom || ''}`.trim();
+                    if (displayName) {
+                        optionsHTML += `<option value="${laureat.id}">${displayName} (${laureat.annee})</option>`;
+                    }
+                });
+
+                laureatSelect.innerHTML = optionsHTML;
+                addModal.classList.remove('hidden');
+                addModal.classList.add('flex');
+            }
+            
+            function hideAddModal() {
+                addModal.classList.add('hidden');
+                addModal.classList.remove('flex');
+            }
+            
+            navAddLink.addEventListener('click', (e) => { e.preventDefault(); showAddModal(); });
+            closeAddModalButton.addEventListener('click', hideAddModal);
+            addModal.addEventListener('click', (e) => { if (e.target === addModal) hideAddModal(); });
+            
+            addParcoursForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const messageDiv = document.getElementById('add-form-message');
+                const laureatId = document.getElementById('laureat-select').value;
+                const dateFinValue = document.getElementById('date-fin-input').value;
+
+                if (!laureatId) {
+                    messageDiv.innerHTML = `<p class="text-red-600">Veuillez sélectionner un lauréat.</p>`;
+                    return;
+                }
+
+                const newParcoursData = {
+                    action: 'create',
+                    laureatId: laureatId,
+                    entreprise: document.getElementById('entreprise-input').value,
+                    poste: document.getElementById('poste-input').value,
+                    dateDebut: document.getElementById('date-debut-input').value,
+                    dateFin: dateFinValue === '' ? 'Présent' : dateFinValue, 
+                    localisation: document.getElementById('localisation-input').value
+                };
+
+                messageDiv.innerHTML = `<p class="text-blue-600"><i class="fas fa-spinner fa-spin mr-2"></i>Enregistrement...</p>`;
+
+                try {
+                    const response = await fetch('mana_parcours.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newParcoursData),
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.status === 'success') {
+                        messageDiv.innerHTML = `<p class="text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>${result.message}</p>`;
+                        await fetchData();
+                        setTimeout(() => {
+                            hideAddModal();
+                            messageDiv.innerHTML = '';
+                            addParcoursForm.reset();
+                        }, 1500);
+                    } else {
+                        messageDiv.innerHTML = `<p class="text-red-600">Erreur: ${result.message || 'Erreur inconnue'}</p>`;
+                    }
+                } catch (error) {
+                    messageDiv.innerHTML = `<p class="text-red-600">Erreur de communication avec le serveur.</p>`;
+                }
+            });
+
+            //PROFILE MODAL LOGIC
+            
+            function hideEditModal() {
+                editModal.classList.add('hidden');
+                editModal.classList.remove('flex');
+                document.getElementById('edit-form-message').innerHTML = '';
+            }
+
+            function populateParcoursList(parcours) {
+                const parcoursListDiv = document.getElementById('parcours-list');
+                parcoursListDiv.innerHTML = '';
+                
+                if (!parcours || parcours.length === 0) {
+                    parcoursListDiv.innerHTML = `<p class="text-center text-slate-500">Aucun parcours professionnel enregistré.</p>`;
+                    return;
+                }
+                
+                const sortedParcours = [...parcours].sort((a, b) => new Date(b.dateDebut) - new Date(a.dateDebut));
+
+                sortedParcours.forEach(p => {
+                    const dateFinDisplay = (p.dateFin === 'Présent' || !p.dateFin) ? 'Présent' : p.dateFin;
+                    const dateFinValue = (p.dateFin === 'Présent' || !p.dateFin) ? '' : p.dateFin;
+                    const parcoursHTML = `
+                        <div class="p-3 border border-slate-200 rounded-lg flex justify-between items-center bg-white shadow-sm">
+                            <div>
+                                <h4 class="font-semibold text-slate-800">${p.poste}</h4>
+                                <p class="text-slate-600">${p.entreprise}</p>
+                                <p class="text-sm text-slate-500 mt-1">${p.dateDebut} - ${dateFinDisplay} ${p.localisation ? '• ' + p.localisation : ''}</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <button type="button" class="edit-parcours-button bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-1 px-3 rounded-md mr-2 text-sm" 
+                                    data-parcours-id="${p.id}" 
+                                    data-entreprise="${p.entreprise}" 
+                                    data-poste="${p.poste}" 
+                                    data-date-debut="${p.dateDebut}" 
+                                    data-date-fin="${dateFinValue}" 
+                                    data-localisation="${p.localisation || ''}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="delete-parcours-button bg-red-100 hover:bg-red-200 text-red-800 font-bold py-1 px-3 rounded-md text-sm" data-parcours-id="${p.id}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    parcoursListDiv.insertAdjacentHTML('beforeend', parcoursHTML);
+                });
+            }
+            
+            editProfileButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (currentLaureat) {
+                    document.getElementById('edit-laureat-name').textContent = `${currentLaureat.prenom} ${currentLaureat.nom}`;
+                    document.getElementById('edit-laureat-id-parcours').value = currentLaureat.id;
+                    // This logic focuses on the parcours management.
+                    
+                    populateParcoursList(currentLaureat.parcours);
+                    
+                    editModal.classList.remove('hidden');
+                    editModal.classList.add('flex');
+                } else {
+                    alert("Erreur: Aucun lauréat n'est actuellement sélectionné.");
+                }
+            });
+
+            closeEditModalButton.addEventListener('click', hideEditModal);
+            editModal.addEventListener('click', (e) => { if (e.target === editModal) hideEditModal(); });
+
+            document.getElementById('parcours-list').addEventListener('click', async (e) => {
+                const deleteButton = e.target.closest('.delete-parcours-button');
+                const editButton = e.target.closest('.edit-parcours-button');
+
+                if (deleteButton) {
+                    const parcoursId = deleteButton.dataset.parcoursId;
+                    if (confirm('Êtes-vous sûr de vouloir supprimer ce parcours ?')) {
+                         await handleParcoursAction({ action: 'delete', parcoursId });
+                    }
+                }
+                
+                if (editButton) {
+                    const { parcoursId, entreprise, poste, dateDebut, dateFin, localisation } = editButton.dataset;
+                    
+                    document.getElementById('edit-entreprise-input').value = entreprise;
+                    document.getElementById('edit-poste-input').value = poste;
+                    document.getElementById('edit-date-debut-input').value = dateDebut;
+                    document.getElementById('edit-date-fin-input').value = dateFin;
+                    document.getElementById('edit-localisation-input').value = localisation;
+                    
+                    addParcoursEditForm.dataset.mode = 'update';
+                    addParcoursEditForm.dataset.parcoursId = parcoursId;
+                    
+                    const submitButton = addParcoursEditForm.querySelector('button[type="submit"]');
+                    submitButton.innerHTML = '<i class="fas fa-save mr-2"></i>Mettre à jour cette expérience';
+                    submitButton.classList.remove('bg-[#3579C1]', 'hover:bg-[#2a68a8]');
+                    submitButton.classList.add('bg-amber-500', 'hover:bg-amber-600');
+                    document.getElementById('edit-entreprise-input').focus();
+                }
+            });
+
+            addParcoursEditForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const mode = addParcoursEditForm.dataset.mode || 'create';
+                const dateFinValue = document.getElementById('edit-date-fin-input').value;
+
+                const data = {
+                    action: mode,
+                    laureatId: document.getElementById('edit-laureat-id-parcours').value,
+                    parcoursId: addParcoursEditForm.dataset.parcoursId || null,
+                    entreprise: document.getElementById('edit-entreprise-input').value,
+                    poste: document.getElementById('edit-poste-input').value,
+                    dateDebut: document.getElementById('edit-date-debut-input').value,
+                    dateFin: dateFinValue === '' ? 'Présent' : dateFinValue,
+                    localisation: document.getElementById('edit-localisation-input').value
+                };
+
+                await handleParcoursAction(data);
+            });
+            
+            async function handleParcoursAction(data) {
+                const messageDiv = document.getElementById('edit-form-message');
+                messageDiv.innerHTML = `<p class="text-blue-600"><i class="fas fa-spinner fa-spin mr-2"></i>Traitement en cours...</p>`;
+                
+                try {
+                    const response = await fetch('mana_parcours.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    
+                    if (response.ok && result.status === 'success') {
+                        messageDiv.innerHTML = `<p class="text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>${result.message}</p>`;
+                        
+                        await fetchData(); // Refresh all data from DB
+                        const updatedLaureat = laureatsData.find(l => l.id === currentLaureat.id);
+                        if (updatedLaureat) {
+                            currentLaureat = updatedLaureat; // Update the global state
+                            showProfile(currentLaureat); // Refresh the profile page view
+                            populateParcoursList(currentLaureat.parcours); // Refresh the list in the modal
+                        }
+                        
+                        // Reset form state
+                        addParcoursEditForm.reset();
+                        delete addParcoursEditForm.dataset.mode;
+                        delete addParcoursEditForm.dataset.parcoursId;
+                        const submitButton = addParcoursEditForm.querySelector('button[type="submit"]');
+                        submitButton.innerHTML = '<i class="fas fa-plus mr-2"></i>Ajouter cette expérience';
+                        submitButton.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+                        submitButton.classList.add('bg-[#3579C1]', 'hover:bg-[#2a68a8]');
+
+                    } else {
+                        messageDiv.innerHTML = `<p class="text-red-600">Erreur: ${result.message || 'Erreur inconnue'}</p>`;
+                    }
+                } catch (error) {
+                    messageDiv.innerHTML = `<p class="text-red-600">Erreur de communication avec le serveur.</p>`;
+                    console.error('Fetch Error:', error);
+                }
+            }
+
+            //INITIAL STATE
+            fetchData();
+            showPage('dashboard');
+        });
+    </script>
+</body>
+</html>
